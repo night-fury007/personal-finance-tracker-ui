@@ -1,0 +1,135 @@
+import {
+  Account,
+  DashboardMetrics,
+  PortfolioHolding,
+  Transaction,
+} from "@/types";
+
+export const mockMetrics: DashboardMetrics = {
+  totalNetWorth: 54998,
+  monthlyCashFlow: 3629,
+  liquidCashBalance: 59046,
+  netWorthChangePercent: 5.2,
+  cashFlowChangePercent: 3.8,
+  liquidCashChangePercent: 1.5,
+};
+
+export const mockAccounts: Account[] = [
+  {
+    id: "1",
+    name: "Primary Checking",
+    type: "Checking",
+    balance: 14500,
+    currency: "USD",
+    institution: "Chase Bank",
+    accountNumberMasked: "•••• 4812",
+  },
+  {
+    id: "2",
+    name: "High Yield Savings",
+    type: "Savings",
+    balance: 32000,
+    currency: "USD",
+    institution: "Marcus",
+    accountNumberMasked: "•••• 9921",
+  },
+  {
+    id: "3",
+    name: "HDFC Salary Account",
+    type: "Checking",
+    balance: 250000,
+    currency: "INR",
+    institution: "HDFC Bank",
+    accountNumberMasked: "•••• 3042",
+  },
+  {
+    id: "4",
+    name: "Primary Credit Card",
+    type: "Credit Card",
+    balance: -1250,
+    currency: "USD",
+    institution: "Amex Gold",
+    accountNumberMasked: "•••• 1004",
+  },
+];
+
+export const mockTransactions: Transaction[] = [
+  {
+    id: "tx-1",
+    date: "2026-06-05",
+    category: "Housing",
+    description: "Monthly Apartment Rent",
+    amount: 1500,
+    currency: "USD",
+    type: "expense",
+  },
+  {
+    id: "tx-2",
+    date: "2026-06-04",
+    category: "Dining",
+    description: "Fine Dining Bistro",
+    amount: 120,
+    currency: "USD",
+    type: "expense",
+  },
+  {
+    id: "tx-3",
+    date: "2026-06-02",
+    category: "Investment",
+    description: "Apple Stock Purchase (AAPL)",
+    amount: 250,
+    currency: "USD",
+    type: "investment",
+  },
+  {
+    id: "tx-4",
+    date: "2026-06-01",
+    category: "Salary",
+    description: "Monthly Enterprise Payroll",
+    amount: 6500,
+    currency: "USD",
+    type: "income",
+  },
+  {
+    id: "tx-5",
+    date: "2026-05-28",
+    category: "Utilities",
+    description: "Electricity & Fiber Internet",
+    amount: 95,
+    currency: "USD",
+    type: "expense",
+  },
+];
+
+export const mockPortfolios: PortfolioHolding[] = [
+  {
+    id: "p-1",
+    assetName: "Apple Inc.",
+    ticker: "AAPL",
+    assetType: "Stock",
+    investedValue: 10000,
+    currentValuation: 12400,
+    currency: "USD",
+    returnsPercent: 24.0,
+  },
+  {
+    id: "p-2",
+    assetName: "Vanguard S&P 500 ETF",
+    ticker: "VOO",
+    assetType: "Mutual Fund",
+    investedValue: 25000,
+    currentValuation: 28900,
+    currency: "USD",
+    returnsPercent: 15.6,
+  },
+  {
+    id: "p-3",
+    assetName: "Reliance Industries",
+    ticker: "RELIANCE",
+    assetType: "Stock",
+    investedValue: 150000,
+    currentValuation: 185000,
+    currency: "INR",
+    returnsPercent: 23.3,
+  },
+];
