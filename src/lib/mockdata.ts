@@ -1,135 +1,168 @@
-import {
-  Account,
-  DashboardMetrics,
-  PortfolioHolding,
-  Transaction,
-} from "@/types";
+export interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: "income" | "expense" | "investment";
+}
 
-export const mockMetrics: DashboardMetrics = {
-  totalNetWorth: 54998,
-  monthlyCashFlow: 3629,
-  liquidCashBalance: 59046,
-  netWorthChangePercent: 5.2,
-  cashFlowChangePercent: 3.8,
-  liquidCashChangePercent: 1.5,
+export interface PortfolioMetric {
+  market: string;
+  currency: string;
+  currentValue: number;
+  investedAmount: number;
+  absoluteProfitLoss: number;
+  percentageProfitLoss: number;
+}
+
+export interface LiquidCashMetric {
+  currencyCode: string;
+  symbol: string;
+  balance: number;
+}
+
+export const mockMetrics = {
+  indiaPortfolio: {
+    market: "India Portfolio",
+    currency: "₹",
+    currentValue: 850000,
+    investedAmount: 720000,
+    absoluteProfitLoss: 130000,
+    percentageProfitLoss: 18.06,
+  },
+  usPortfolio: {
+    market: "US Portfolio",
+    currency: "$",
+    currentValue: 42500,
+    investedAmount: 35000,
+    absoluteProfitLoss: 7500,
+    percentageProfitLoss: 21.43,
+  },
+  usLiquidCash: {
+    currencyCode: "USD",
+    symbol: "$",
+    balance: 12450,
+  },
+  inrLiquidCash: {
+    currencyCode: "INR",
+    symbol: "₹",
+    balance: 245000,
+  },
 };
-
-export const mockAccounts: Account[] = [
-  {
-    id: "1",
-    name: "Primary Checking",
-    type: "Checking",
-    balance: 14500,
-    currency: "USD",
-    institution: "Chase Bank",
-    accountNumberMasked: "•••• 4812",
-  },
-  {
-    id: "2",
-    name: "High Yield Savings",
-    type: "Savings",
-    balance: 32000,
-    currency: "USD",
-    institution: "Marcus",
-    accountNumberMasked: "•••• 9921",
-  },
-  {
-    id: "3",
-    name: "HDFC Salary Account",
-    type: "Checking",
-    balance: 250000,
-    currency: "INR",
-    institution: "HDFC Bank",
-    accountNumberMasked: "•••• 3042",
-  },
-  {
-    id: "4",
-    name: "Primary Credit Card",
-    type: "Credit Card",
-    balance: -1250,
-    currency: "USD",
-    institution: "Amex Gold",
-    accountNumberMasked: "•••• 1004",
-  },
-];
 
 export const mockTransactions: Transaction[] = [
   {
-    id: "tx-1",
-    date: "2026-06-05",
-    category: "Housing",
-    description: "Monthly Apartment Rent",
-    amount: 1500,
-    currency: "USD",
-    type: "expense",
-  },
-  {
-    id: "tx-2",
-    date: "2026-06-04",
-    category: "Dining",
-    description: "Fine Dining Bistro",
-    amount: 120,
-    currency: "USD",
-    type: "expense",
-  },
-  {
-    id: "tx-3",
-    date: "2026-06-02",
-    category: "Investment",
-    description: "Apple Stock Purchase (AAPL)",
-    amount: 250,
-    currency: "USD",
-    type: "investment",
-  },
-  {
-    id: "tx-4",
+    id: "1",
     date: "2026-06-01",
-    category: "Salary",
-    description: "Monthly Enterprise Payroll",
-    amount: 6500,
-    currency: "USD",
+    description: "Tech Corp Salary",
+    category: "Income",
+    amount: 4500,
     type: "income",
   },
   {
-    id: "tx-5",
-    date: "2026-05-28",
-    category: "Utilities",
-    description: "Electricity & Fiber Internet",
-    amount: 95,
-    currency: "USD",
+    id: "2",
+    date: "2026-06-03",
+    description: "Rent & Utilities",
+    category: "Housing",
+    amount: 1500,
     type: "expense",
+  },
+  {
+    id: "3",
+    date: "2026-06-05",
+    description: "US Index ETF Buy",
+    category: "Investment",
+    amount: 1200,
+    type: "investment",
+  },
+  {
+    id: "4",
+    date: "2026-06-08",
+    description: "Whole Foods Market",
+    category: "Dining",
+    amount: 250,
+    type: "expense",
+  },
+  {
+    id: "5",
+    date: "2026-06-10",
+    description: "Nifty 50 Index Fund",
+    category: "Investment",
+    amount: 25000,
+    type: "investment",
   },
 ];
 
-export const mockPortfolios: PortfolioHolding[] = [
+export interface ExpenseItem {
+  id: string;
+  date: string;
+  description: string;
+  category:
+    | "Housing"
+    | "Dining"
+    | "Utilities"
+    | "Travel"
+    | "Healthcare"
+    | "Subscriptions";
+  amount: number;
+  currency: "INR" | "USD";
+  paymentMethod: string;
+}
+
+export const mockExpenses: ExpenseItem[] = [
   {
-    id: "p-1",
-    assetName: "Apple Inc.",
-    ticker: "AAPL",
-    assetType: "Stock",
-    investedValue: 10000,
-    currentValuation: 12400,
+    id: "exp-1",
+    date: "2026-06-01",
+    description: "Apartment Rent",
+    category: "Housing",
+    amount: 1200,
     currency: "USD",
-    returnsPercent: 24.0,
+    paymentMethod: "Bank Transfer",
   },
   {
-    id: "p-2",
-    assetName: "Vanguard S&P 500 ETF",
-    ticker: "VOO",
-    assetType: "Mutual Fund",
-    investedValue: 25000,
-    currentValuation: 28900,
+    id: "exp-2",
+    date: "2026-06-03",
+    description: "Grocery Run (Whole Foods)",
+    category: "Dining",
+    amount: 350,
     currency: "USD",
-    returnsPercent: 15.6,
+    paymentMethod: "Credit Card",
   },
   {
-    id: "p-3",
-    assetName: "Reliance Industries",
-    ticker: "RELIANCE",
-    assetType: "Stock",
-    investedValue: 150000,
-    currentValuation: 185000,
+    id: "exp-3",
+    date: "2026-06-05",
+    description: "Electricity & Fiber Internet",
+    category: "Utilities",
+    amount: 4500,
     currency: "INR",
-    returnsPercent: 23.3,
+    paymentMethod: "Auto Debit",
+  },
+  {
+    id: "exp-4",
+    date: "2026-06-08",
+    description: "Flight to Mumbai",
+    category: "Travel",
+    amount: 850,
+    currency: "USD",
+    paymentMethod: "Credit Card",
+  },
+  {
+    id: "exp-5",
+    date: "2026-06-10",
+    description: "Cloud Infrastructure & SaaS",
+    category: "Subscriptions",
+    amount: 120,
+    currency: "USD",
+    paymentMethod: "Corporate Card",
+  },
+  {
+    id: "exp-6",
+    date: "2026-06-12",
+    description: "Annual Health Checkup",
+    category: "Healthcare",
+    amount: 6500,
+    currency: "INR",
+    paymentMethod: "UPI",
   },
 ];
