@@ -1,183 +1,201 @@
 "use client";
 
-import { InvestmentItem } from "@/lib/mockdata";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { Modal } from "@/components/common/Modal";
+import { Loader2, PieChart } from "lucide-react";
+import React, { useState } from "react";
 
 interface AddInvestmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (investment: InvestmentItem) => void;
+  onSuccess: () => void;
 }
 
 export function AddInvestmentModal({
   isOpen,
   onClose,
-  onAdd,
+  onSuccess,
 }: AddInvestmentModalProps) {
-  const [name, setName] = useState("");
+  const [assetName, setAssetName] = useState("");
   const [ticker, setTicker] = useState("");
-  const [region, setRegion] = useState<"India" | "US">("India");
-  const [type, setType] = useState<InvestmentItem["type"]>("Stock");
-  const [investedAmount, setInvestedAmount] = useState("");
+  const [assetClass, setAssetClass] = useState("Stock");
+  const [units, setUnits] = useState("");
   const [currentValue, setCurrentValue] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  const [performance, setPerformance] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !ticker || !investedAmount || !currentValue) return;
+    setSubmitting(true);
 
-    const newInvestment: InvestmentItem = {
-      id: `inv-${Date.now()}`,
-      name,
-      ticker: ticker.toUpperCase(),
-      region,
-      type,
-      currency: region === "India" ? "INR" : "USD",
-      investedAmount: parseFloat(investedAmount),
-      currentValue: parseFloat(currentValue),
-    };
+    try {
+      const response = await fetch("/api/investments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assetName,
+          ticker: ticker.toUpperCase(),
+          assetClass,
+          units: parseFloat(units) || 0,
+          currentValue: parseFloat(currentValue) || 0,
+          currency,
+          performance: parseFloat(performance) || 0,
+        }),
+      });
 
-    onAdd(newInvestment);
-    setName("");
-    setTicker("");
-    setInvestedAmount("");
-    setCurrentValue("");
-    onClose();
+      if (!response.ok) {
+        throw new Error("Failed to record investment");
+      }
+
+      // Reset form fields
+      setAssetName("");
+      setTicker("");
+      setUnits("");
+      setCurrentValue("");
+      setPerformance("");
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Error adding investment:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900 text-lg">
-            Add New Investment
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Add New Investment"
+      icon={<PieChart className="w-5 h-5" />}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
               Asset Name
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Apple Inc., Reliance Industries"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              placeholder="e.g. Apple Inc, Vanguard Index"
+              value={assetName}
+              onChange={(e) => setAssetName(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Ticker Symbol
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. AAPL, RELIANCE"
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Market Region
-              </label>
-              <select
-                value={region}
-                onChange={(e) => {
-                  const reg = e.target.value as "India" | "US";
-                  setRegion(reg);
-                }}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="India">India (INR ₹)</option>
-                <option value="US">US (USD $)</option>
-              </select>
-            </div>
-          </div>
-
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Asset Type
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Ticker Symbol
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. AAPL, VOO"
+              value={ticker}
+              onChange={(e) => setTicker(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 uppercase"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Asset Class
             </label>
             <select
-              value={type}
-              onChange={(e) =>
-                setType(e.target.value as InvestmentItem["type"])
-              }
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              value={assetClass}
+              onChange={(e) => setAssetClass(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              <option value="Stock">Stock / Equity</option>
+              <option value="Stock">Stock</option>
               <option value="Mutual Fund">Mutual Fund</option>
               <option value="ETF">ETF</option>
-              <option value="PPF">PPF / Provident Fund</option>
               <option value="Crypto">Crypto</option>
+              <option value="Real Estate">Real Estate</option>
             </select>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Invested Amount
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                value={investedAmount}
-                onChange={(e) => setInvestedAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Current Value
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                value={currentValue}
-                onChange={(e) => setCurrentValue(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Currency
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
-            >
-              Save Investment
-            </button>
+              <option value="USD">USD ($)</option>
+              <option value="INR">INR (₹)</option>
+            </select>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Units Held
+            </label>
+            <input
+              type="number"
+              step="any"
+              required
+              placeholder="0.00"
+              value={units}
+              onChange={(e) => setUnits(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Current Value
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="0.00"
+              value={currentValue}
+              onChange={(e) => setCurrentValue(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Return (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              required
+              placeholder="e.g. 12.5"
+              value={performance}
+              onChange={(e) => setPerformance(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm shadow-blue-600/20 cursor-pointer"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save Investment
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

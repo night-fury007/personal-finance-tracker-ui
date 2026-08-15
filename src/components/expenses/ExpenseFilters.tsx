@@ -1,46 +1,62 @@
-import { Search, Filter } from 'lucide-react';
+"use client";
+
+import { ChevronDown, Search } from "lucide-react";
 
 interface ExpenseFiltersProps {
   searchQuery: string;
-  setSearchQuery: (q: string) => void;
-  selectedCategory: string;
-  setSelectedCategory: (c: string) => void;
+  setSearchQuery: (query: string) => void;
+  selectedType: string;
+  setSelectedType: (type: string) => void;
 }
 
 export function ExpenseFilters({
   searchQuery,
   setSearchQuery,
-  selectedCategory,
-  setSelectedCategory,
+  selectedType,
+  setSelectedType,
 }: ExpenseFiltersProps) {
+  const expenseTypes = [
+    "All",
+    "Food & Dining",
+    "Housing",
+    "Transportation",
+    "Utilities",
+    "Entertainment",
+    "Shopping",
+  ];
+
   return (
-    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div className="relative w-full sm:w-80">
-        <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      {/* Search Bar */}
+      <div className="relative w-full sm:w-96">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
         <input
           type="text"
-          placeholder="Search description or category..."
+          placeholder="Search merchants or payees..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
         />
       </div>
 
-      <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-        <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+      {/* Expense Category Dropdown */}
+      <div className="relative w-full sm:w-56">
         <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-500 transition-colors w-full sm:w-auto"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 pr-10 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs transition-all"
         >
-          <option value="All">All Categories</option>
-          <option value="Housing">Housing</option>
-          <option value="Dining">Dining</option>
-          <option value="Utilities">Utilities</option>
-          <option value="Travel">Travel</option>
-          <option value="Healthcare">Healthcare</option>
-          <option value="Subscriptions">Subscriptions</option>
+          {expenseTypes.map((type) => (
+            <option key={type} value={type}>
+              {type === "All" ? "All Categories" : type}
+            </option>
+          ))}
         </select>
+        <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+          <ChevronDown className="w-4 h-4" />
+        </div>
       </div>
     </div>
   );

@@ -1,181 +1,166 @@
 "use client";
 
-import { IncomeItem } from "@/lib/mockdata";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { Modal } from "@/components/common/Modal";
+import { ArrowDownToLine, Loader2 } from "lucide-react";
+import React, { useState } from "react";
 
 interface AddIncomeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (income: IncomeItem) => void;
+  onSuccess: () => void;
 }
 
 export function AddIncomeModal({
   isOpen,
   onClose,
-  onAdd,
+  onSuccess,
 }: AddIncomeModalProps) {
   const [source, setSource] = useState("");
-  const [category, setCategory] = useState<IncomeItem["category"]>("Salary");
-  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  const [category, setCategory] = useState("Salary");
   const [amount, setAmount] = useState("");
-  const [frequency, setFrequency] =
-    useState<IncomeItem["frequency"]>("Monthly");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  const [date, setDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!source || !amount) return;
+    setSubmitting(true);
 
-    const newIncome: IncomeItem = {
-      id: `inc-${Date.now()}`,
-      source,
-      category,
-      currency,
-      amount: parseFloat(amount),
-      frequency,
-      date,
-    };
+    try {
+      const response = await fetch("/api/income", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source,
+          category,
+          amount: parseFloat(amount) || 0,
+          currency,
+          date,
+        }),
+      });
 
-    onAdd(newIncome);
-    setSource("");
-    setAmount("");
-    onClose();
+      if (!response.ok) {
+        throw new Error("Failed to record income");
+      }
+
+      // Reset form fields
+      setSource("");
+      setAmount("");
+      setDate("");
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Error adding income:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900 text-lg">
-            Record New Income Stream
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Record New Income"
+      icon={<ArrowDownToLine className="w-5 h-5" />}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            Source / Payer
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Acme Corp, Upwork"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Source / Payer Name
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+            >
+              <option value="Salary">Salary</option>
+              <option value="Freelance">Freelance</option>
+              <option value="Dividends">Dividends</option>
+              <option value="Rental">Rental</option>
+              <option value="Bonus">Bonus</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Currency
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="INR">INR (₹)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Amount
             </label>
             <input
-              type="text"
+              type="number"
+              step="0.01"
               required
-              placeholder="e.g. Employer, Client, Dividend Fund"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value as IncomeItem["category"])
-                }
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="Salary">Salary</option>
-                <option value="Freelance">Freelance</option>
-                <option value="Dividends">Dividends</option>
-                <option value="Rental">Rental</option>
-                <option value="Bonus">Bonus</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Frequency
-              </label>
-              <select
-                value={frequency}
-                onChange={(e) =>
-                  setFrequency(e.target.value as IncomeItem["frequency"])
-                }
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="Monthly">Monthly</option>
-                <option value="Quarterly">Quarterly</option>
-                <option value="Annually">Annually</option>
-                <option value="One-Time">One-Time</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Currency
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as "USD" | "INR")}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="INR">INR (₹)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Amount
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              />
-            </div>
-          </div>
-
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Date Received
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Date
             </label>
             <input
               type="date"
               required
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
+        </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
-            >
-              Save Income
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm shadow-blue-600/20 cursor-pointer"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save Income
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

@@ -1,98 +1,88 @@
 "use client";
 
+import { useServerTableData } from "@/hooks/useServerTableData";
 import { Download, Plus } from "lucide-react";
 import { useState } from "react";
-import { ExpenseItem, mockExpenses } from "../../lib/mockdata";
+
 import { AddExpenseModal } from "./AddExpenseModal";
 import { ExpenseFilters } from "./ExpenseFilters";
 import { ExpenseSummaryCards } from "./ExpenseSummaryCards";
-import { ExpenseTable } from "./ExpenseTable";
+import { ExpenseItem, ExpenseTable } from "./ExpenseTable";
 
 export function ExpenseManagement() {
-  const [expenses, setExpenses] = useState<ExpenseItem[]>(mockExpenses);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("All");
 
-  // Filter logic
-  const filteredExpenses = expenses.filter((item) => {
-    const matchesSearch =
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const {
+    data: expenses,
+    loading,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalRows,
+    refetch,
+  } = useServerTableData<ExpenseItem>({
+    endpoint: "/api/expenses",
   });
-
-  // Calculate totals
-  const totalUSD = expenses
-    .filter((e) => e.currency === "USD")
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  const totalINR = expenses
-    .filter((e) => e.currency === "INR")
-    .reduce((acc, curr) => acc + curr.amount, 0);
-
-  const handleAddExpense = (newExpense: ExpenseItem) => {
-    setExpenses([newExpense, ...expenses]);
-  };
-
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(expenses.filter((e) => e.id !== id));
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {/* Page Title & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 1. Page Header & Actions */}
+      <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Expenses Management
+          <h1 className="text-2xl font-bold text-slate-900">
+            Expense Tracking
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Track, categorize, and filter multi-currency living expenses and
-            overhead.
+            Monitor and manage your outgoing cash flow.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-xs cursor-pointer">
             <Download className="w-4 h-4" /> Export CSV
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-sm shadow-blue-600/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Expense
           </button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <ExpenseSummaryCards
-        totalUSD={totalUSD}
-        totalINR={totalINR}
-        count={expenses.length}
-      />
+      {/* 2. KPI Summary Cards */}
+      <ExpenseSummaryCards expenses={expenses} />
 
-      {/* Filter & Search Toolbar */}
+      {/* 3. Filters & Search */}
       <ExpenseFilters
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
       />
 
-      {/* Data Table */}
+      {/* 4. Abstracted Data Table & Pagination */}
       <ExpenseTable
-        expenses={filteredExpenses}
-        onDelete={handleDeleteExpense}
+        expenses={expenses}
+        loading={loading}
+        page={page}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalRows={totalRows}
+        refetch={refetch}
       />
 
-      {/* Add Expense Modal Form */}
+      {/* 5. Add Expense Modal */}
       <AddExpenseModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddExpense}
+        onSuccess={() => {
+          refetch();
+          setPage(1);
+        }}
       />
     </div>
   );

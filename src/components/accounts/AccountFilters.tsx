@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 
 interface AccountFiltersProps {
   searchQuery: string;
@@ -9,50 +9,52 @@ interface AccountFiltersProps {
   setSelectedType: (type: string) => void;
 }
 
-const accountTypes = [
-  "All",
-  "Checking",
-  "Savings",
-  "Credit Card",
-  "Wallet",
-  "Investment Cash",
-];
-
 export function AccountFilters({
   searchQuery,
   setSearchQuery,
   selectedType,
   setSelectedType,
 }: AccountFiltersProps) {
+  const accountTypes = [
+    "All",
+    "Checking",
+    "Savings",
+    "Credit Card",
+    "Brokerage",
+  ];
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-      {/* Search Input */}
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      {/* Search Bar */}
+      <div className="relative w-full sm:w-96">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
         <input
           type="text"
-          placeholder="Search institution or account alias..."
+          placeholder="Search institutions or accounts..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
         />
       </div>
 
-      {/* Type Filter Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-        {accountTypes.map((type) => (
-          <button
-            key={type}
-            onClick={() => setSelectedType(type)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-              selectedType === type
-                ? "bg-blue-600 text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {type}
-          </button>
-        ))}
+      {/* Account Type Dropdown */}
+      <div className="relative w-full sm:w-56">
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 pr-10 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer shadow-2xs transition-all"
+        >
+          {accountTypes.map((type) => (
+            <option key={type} value={type}>
+              {type === "All" ? "All Account Types" : type}
+            </option>
+          ))}
+        </select>
+        <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+          <ChevronDown className="w-4 h-4" />
+        </div>
       </div>
     </div>
   );

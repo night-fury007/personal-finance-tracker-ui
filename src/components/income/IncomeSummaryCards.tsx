@@ -2,59 +2,63 @@
 
 import { DollarSign, IndianRupee } from "lucide-react";
 
-interface IncomeSummaryCardsProps {
-  totalUSD: number;
-  totalINR: number;
-  count: number;
+export interface IncomeItem {
+  id: string;
+  source: string;
+  category: string;
+  amount: number;
+  currency: "USD" | "INR";
+  date: string;
 }
 
-export function IncomeSummaryCards({
-  totalUSD,
-  totalINR,
-  count,
-}: IncomeSummaryCardsProps) {
+interface IncomeSummaryCardsProps {
+  incomes: IncomeItem[];
+}
+
+export function IncomeSummaryCards({ incomes = [] }: IncomeSummaryCardsProps) {
+  const totalUSD = incomes
+    .filter((inc) => inc.currency === "USD")
+    .reduce((sum, inc) => sum + inc.amount, 0);
+
+  const totalINR = incomes
+    .filter((inc) => inc.currency === "INR")
+    .reduce((sum, inc) => sum + inc.amount, 0);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Total INR Income Tile */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">
-            Total Income (INR Streams)
-          </p>
-          <h3 className="text-3xl font-bold text-slate-900 mt-1">
-            ₹
-            {totalINR.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Indian salary, bonuses & rental income
-          </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <DollarSign className="w-6 h-6" />
         </div>
-        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg">
-          <IndianRupee className="w-6 h-6" />
-        </div>
-      </div>
-      {/* Total USD Income Tile */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
-            Total Income (USD Streams)
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Income (USD)
           </p>
-          <h3 className="text-3xl font-bold text-slate-900 mt-1">
+          <p className="text-2xl font-bold text-slate-900">
             $
             {totalUSD.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Salary, consulting & US dividends
           </p>
         </div>
-        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg">
-          <DollarSign className="w-6 h-6" />
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <IndianRupee className="w-6 h-6" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Income (INR)
+          </p>
+          <p className="text-2xl font-bold text-slate-900">
+            ₹
+            {totalINR.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
         </div>
       </div>
     </div>

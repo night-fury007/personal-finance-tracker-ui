@@ -1,89 +1,136 @@
 "use client";
 
-import { AccountItem } from "@/lib/mockdata";
-import { Building2, Trash2 } from "lucide-react";
+import { ColumnDef, DataTable } from "@/components/common/DataTable";
+import { TablePagination } from "@/components/common/TablePagination";
+import { Building2, Edit2, Trash2 } from "lucide-react";
+
+// 1. Export the interface so the parent can use it too
+export interface AccountItem {
+  id: string;
+  institution: string;
+  accountName: string;
+  accountType: "Checking" | "Savings" | "Credit Card" | "Brokerage";
+  balance: number;
+  currency: "USD" | "INR";
+}
 
 interface AccountTableProps {
   accounts: AccountItem[];
-  onDelete: (id: string) => void;
+  loading: boolean;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalRows: number;
+  refetch: () => void;
 }
 
-export function AccountTable({ accounts, onDelete }: AccountTableProps) {
+export function AccountTable({
+  accounts,
+  loading,
+  page,
+  setPage,
+  pageSize,
+  setPageSize,
+  totalRows,
+  refetch,
+}: AccountTableProps) {
+  // 2. Column definitions live here, keeping the main page clean
+  const columns: ColumnDef<AccountItem>[] = [
+    {
+      header: "Institution",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-slate-400" />
+          <span className="font-semibold text-slate-900">
+            {item.institution}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Account Name",
+      accessorKey: "accountName",
+    },
+    {
+      header: "Type",
+      cell: (item) => {
+        const colors = {
+          Checking: "bg-blue-50 text-blue-700",
+          Savings: "bg-emerald-50 text-emerald-700",
+          "Credit Card": "bg-rose-50 text-rose-700",
+          Brokerage: "bg-purple-50 text-purple-700",
+        };
+        return (
+          <span
+            className={`px-2.5 py-1 text-xs font-semibold rounded-full ${colors[item.accountType]}`}
+          >
+            {item.accountType}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Balance",
+      cell: (item) => (
+        <span className="font-medium text-slate-900">
+          {item.currency === "USD" ? "$" : "₹"}
+          {item.balance.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      header: "Actions",
+      className: "text-right",
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => console.log("Edit:", item.id)}
+            className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+            title="Edit Account"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={async () => {
+              if (confirm("Delete this account mapping?")) {
+                try {
+                  await fetch(`/api/accounts?id=${item.id}`, {
+                    method: "DELETE",
+                  });
+                  refetch();
+                } catch (error) {
+                  console.error("Failed to delete account:", error);
+                }
+              }
+            }}
+            className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+            title="Delete Account"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-3 px-6">Account Name</th>
-              <th className="py-3 px-6">Type</th>
-              <th className="py-3 px-6">Currency</th>
-              <th className="py-3 px-6 text-right">Balance</th>
-              <th className="py-3 px-6 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-            {accounts.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-slate-400">
-                  No accounts found matching your criteria.
-                </td>
-              </tr>
-            ) : (
-              accounts.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-50/80 transition-colors"
-                >
-                  <td className="py-4 px-6 font-medium text-slate-900 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    {item.institution}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                        item.currency === "USD"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {item.currency}
-                    </span>
-                  </td>
-                  <td
-                    className={`py-4 px-6 text-right font-semibold ${
-                      item.balance < 0 ? "text-rose-600" : "text-slate-900"
-                    }`}
-                  >
-                    {item.currency === "USD" ? "$" : "₹"}
-                    {Math.abs(item.balance).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                    {item.balance < 0 && " (Cr)"}
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <button
-                      onClick={() => onDelete(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Delete Account"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-0">
+      <DataTable
+        columns={columns}
+        data={accounts}
+        loading={loading}
+        keyExtractor={(item) => item.id}
+        emptyMessage="No linked accounts found. Click 'Add Account' to get started."
+      />
+      <TablePagination
+        page={page}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalRows={totalRows}
+        loading={loading}
+      />
     </div>
   );
 }

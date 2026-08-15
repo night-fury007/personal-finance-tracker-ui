@@ -1,60 +1,71 @@
 "use client";
 
-import { DollarSign, IndianRupee } from "lucide-react";
+import { Landmark, Wallet } from "lucide-react";
 
+// 1. Define the shape of the data we are passing in
+interface AccountItem {
+  id: string;
+  institution: string;
+  accountName: string;
+  accountType: "Checking" | "Savings" | "Credit Card" | "Brokerage";
+  balance: number;
+  currency: "USD" | "INR";
+}
+
+// 2. Define the props for this component
 interface AccountSummaryCardsProps {
-  totalUSD: number;
-  totalINR: number;
-  count: number;
+  accounts: AccountItem[];
 }
 
 export function AccountSummaryCards({
-  totalUSD,
-  totalINR,
-  count,
+  accounts = [],
 }: AccountSummaryCardsProps) {
+  // 3. Dynamically calculate the totals based on the passed accounts array
+  const totalUSD = accounts
+    .filter((acc) => acc.currency === "USD")
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
+  const totalINR = accounts
+    .filter((acc) => acc.currency === "INR")
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* INR Liquid Balance Tile */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">
-            Total Liquid Cash (INR)
-          </p>
-          <h3 className="text-3xl font-bold text-slate-900 mt-1">
-            ₹
-            {totalINR.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Across Indian salary & emergency accounts
-          </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* USD Total Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <Wallet className="w-6 h-6" />
         </div>
-        <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-bold text-lg">
-          <IndianRupee className="w-6 h-6" />
-        </div>
-      </div>
-      {/* USD Liquid Balance Tile */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
-            Total Liquid Cash (USD)
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Balance (USD)
           </p>
-          <h3 className="text-3xl font-bold text-slate-900 mt-1">
+          <p className="text-2xl font-bold text-slate-900">
             $
             {totalUSD.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Across US checking, savings & wallets
           </p>
         </div>
-        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg">
-          <DollarSign className="w-6 h-6" />
+      </div>
+
+      {/* INR Total Card */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <Landmark className="w-6 h-6" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Balance (INR)
+          </p>
+          <p className="text-2xl font-bold text-slate-900">
+            ₹
+            {totalINR.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
         </div>
       </div>
     </div>

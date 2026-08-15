@@ -1,158 +1,166 @@
 "use client";
 
-import { AccountItem } from "@/lib/mockdata";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { Modal } from "@/components/common/Modal";
+import { Building2, Loader2 } from "lucide-react";
+import React, { useState } from "react";
 
 interface AddAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (account: AccountItem) => void;
+  onSuccess: () => void;
 }
 
 export function AddAccountModal({
   isOpen,
   onClose,
-  onAdd,
+  onSuccess,
 }: AddAccountModalProps) {
   const [institution, setInstitution] = useState("");
-  const [alias, setAlias] = useState("");
-  const [type, setType] = useState<AccountItem["type"]>("Checking");
-  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  const [accountName, setAccountName] = useState("");
+  const [accountType, setAccountType] = useState<
+    "Checking" | "Savings" | "Credit Card" | "Brokerage"
+  >("Checking");
   const [balance, setBalance] = useState("");
+  const [currency, setCurrency] = useState<"USD" | "INR">("USD");
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!institution || !alias || !balance) return;
+    setSubmitting(true);
 
-    const newAccount: AccountItem = {
-      id: `acc-${Date.now()}`,
-      institution,
-      alias,
-      type,
-      currency,
-      balance: parseFloat(balance),
-      status: "Active",
-    };
+    try {
+      const response = await fetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          institution,
+          accountName,
+          accountType,
+          balance: parseFloat(balance) || 0,
+          currency,
+        }),
+      });
 
-    onAdd(newAccount);
-    setInstitution("");
-    setAlias("");
-    setBalance("");
-    onClose();
+      if (!response.ok) {
+        throw new Error("Failed to create account");
+      }
+
+      // Reset form fields
+      setInstitution("");
+      setAccountName("");
+      setBalance("");
+
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Error adding account:", error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900 text-lg">
-            Add New Account or Wallet
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Link New Account"
+      icon={<Building2 className="w-5 h-5" />}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            Financial Institution
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Chase, HDFC, Vanguard"
+            value={institution}
+            onChange={(e) => setInstitution(e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            Account Name / Number Suffix
+          </label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Primary Checking (...4921)"
+            value={accountName}
+            onChange={(e) => setAccountName(e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Institution / Bank Name
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Account Type
             </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Chase, HDFC, Revolut"
-              value={institution}
-              onChange={(e) => setInstitution(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Account Alias
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Primary Checking, Emergency Fund"
-              value={alias}
-              onChange={(e) => setAlias(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Account Type
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as AccountItem["type"])}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="Checking">Checking</option>
-                <option value="Savings">Savings</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="Wallet">Wallet</option>
-                <option value="Investment Cash">Investment Cash</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-                Currency
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as "USD" | "INR")}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="INR">INR (₹)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 uppercase mb-1">
-              Current Balance
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              placeholder="0.00"
-              value={balance}
-              onChange={(e) => setBalance(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+            <select
+              value={accountType}
+              onChange={(e) => setAccountType(e.target.value as any)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
-            >
-              Save Account
-            </button>
+              <option value="Checking">Checking</option>
+              <option value="Savings">Savings</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Brokerage">Brokerage</option>
+            </select>
           </div>
-        </form>
-      </div>
-    </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+              Currency
+            </label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as any)}
+              className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="INR">INR (₹)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+            Current Balance
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            required
+            placeholder="0.00"
+            value={balance}
+            onChange={(e) => setBalance(e.target.value)}
+            className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm shadow-blue-600/20 cursor-pointer"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save Account
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

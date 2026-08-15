@@ -1,95 +1,88 @@
 "use client";
 
-import { IncomeItem, mockIncomes } from "@/lib/mockdata";
+import { useServerTableData } from "@/hooks/useServerTableData";
 import { Download, Plus } from "lucide-react";
 import { useState } from "react";
+
 import { AddIncomeModal } from "./AddIncomeModal";
 import { IncomeFilters } from "./IncomeFilters";
 import { IncomeSummaryCards } from "./IncomeSummaryCards";
-import { IncomeTable } from "./IncomeTable";
+import { IncomeItem, IncomeTable } from "./IncomeTable";
 
 export function IncomeManagement() {
-  const [incomes, setIncomes] = useState<IncomeItem[]>(mockIncomes);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("All");
 
-  // Filter income list
-  const filteredIncomes = incomes.filter((item) => {
-    const matchesSearch =
-      item.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All" || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const {
+    data: incomes,
+    loading,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalRows,
+    refetch,
+  } = useServerTableData<IncomeItem>({
+    endpoint: "/api/income",
   });
-
-  // Calculate totals by currency
-  const totalUSD = incomes
-    .filter((inc) => inc.currency === "USD")
-    .reduce((sum, inc) => sum + inc.amount, 0);
-
-  const totalINR = incomes
-    .filter((inc) => inc.currency === "INR")
-    .reduce((sum, inc) => sum + inc.amount, 0);
-
-  const handleAddIncome = (newIncome: IncomeItem) => {
-    setIncomes([newIncome, ...incomes]);
-  };
-
-  const handleDeleteIncome = (id: string) => {
-    setIncomes(incomes.filter((inc) => inc.id !== id));
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {/* Header & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 1. Page Header & Actions */}
+      <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900">
             Income Management
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Track multi-currency salary streams, freelance consulting, and
-            investment dividends.
+            Track and manage all recurring and variable earnings.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-xs cursor-pointer">
             <Download className="w-4 h-4" /> Export CSV
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/20"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-sm shadow-blue-600/20 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Income
           </button>
         </div>
       </div>
 
-      {/* 2 Currency KPI Cards */}
-      <IncomeSummaryCards
-        totalUSD={totalUSD}
-        totalINR={totalINR}
-        count={incomes.length}
-      />
+      {/* 2. KPI Summary Cards */}
+      <IncomeSummaryCards incomes={incomes} />
 
-      {/* Filter & Search Toolbar */}
+      {/* 3. Filters & Search */}
       <IncomeFilters
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
       />
 
-      {/* Income Table */}
-      <IncomeTable incomes={filteredIncomes} onDelete={handleDeleteIncome} />
+      {/* 4. Abstracted Data Table & Pagination */}
+      <IncomeTable
+        incomes={incomes}
+        loading={loading}
+        page={page}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalRows={totalRows}
+        refetch={refetch}
+      />
 
-      {/* Add Income Modal */}
+      {/* 5. Add Income Modal */}
       <AddIncomeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddIncome}
+        onSuccess={() => {
+          refetch();
+          setPage(1);
+        }}
       />
     </div>
   );

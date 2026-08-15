@@ -1,61 +1,58 @@
+"use client";
+
+import { DollarSign, IndianRupee } from "lucide-react";
+import { ExpenseItem } from "./ExpenseTable";
+
 interface ExpenseSummaryCardsProps {
-  totalUSD: number;
-  totalINR: number;
-  count: number;
+  expenses: ExpenseItem[];
 }
 
 export function ExpenseSummaryCards({
-  totalUSD,
-  totalINR,
-  count,
+  expenses = [],
 }: ExpenseSummaryCardsProps) {
+  const totalUSD = expenses
+    .filter((exp) => exp.currency === "USD")
+    .reduce((sum, exp) => sum + exp.amount, 0);
+
+  const totalINR = expenses
+    .filter((exp) => exp.currency === "INR")
+    .reduce((sum, exp) => sum + exp.amount, 0);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Total USD Spending
-          </span>
-          <div className="text-2xl font-bold text-slate-900 mt-1.5">
-            ${totalUSD.toLocaleString()}
-          </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+          <DollarSign className="w-6 h-6" />
         </div>
-        <div className="mt-4">
-          <span className="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-            Current billing cycle
-          </span>
+        <div>
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Expenses (USD)
+          </p>
+          <p className="text-2xl font-bold text-slate-900">
+            $
+            {totalUSD.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <div className="p-3 bg-rose-50 text-rose-600 rounded-xl">
+          <IndianRupee className="w-6 h-6" />
+        </div>
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Total INR Spending
-          </span>
-          <div className="text-2xl font-bold text-slate-900 mt-1.5">
-            ₹{totalINR.toLocaleString()}
-          </div>
-        </div>
-        <div className="mt-4">
-          <span className="inline-flex items-center text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-            Domestic outflow
-          </span>
-        </div>
-      </div>
-
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Recorded Transactions
-          </span>
-          <div className="text-2xl font-bold text-slate-900 mt-1.5">
-            {count} Items
-          </div>
-        </div>
-        <div className="mt-4">
-          <span className="inline-flex items-center text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-            100% Reconciled
-          </span>
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+            Total Expenses (INR)
+          </p>
+          <p className="text-2xl font-bold text-slate-900">
+            ₹
+            {totalINR.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
         </div>
       </div>
     </div>

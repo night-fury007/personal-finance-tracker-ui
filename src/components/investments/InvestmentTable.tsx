@@ -1,124 +1,154 @@
 "use client";
 
-import { InvestmentItem } from "@/lib/mockdata";
-import { PieChart, Trash2 } from "lucide-react";
+import { ColumnDef, DataTable } from "@/components/common/DataTable";
+import { TablePagination } from "@/components/common/TablePagination";
+import {
+  Edit2,
+  PieChart,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+
+export interface InvestmentItem {
+  id: string;
+  assetName: string;
+  ticker: string;
+  assetClass: string;
+  units: number;
+  currentValue: number;
+  currency: "USD" | "INR";
+  performance: number; // e.g., 5.4 for +5.4%, -2.1 for -2.1%
+}
 
 interface InvestmentTableProps {
   investments: InvestmentItem[];
-  onDelete: (id: string) => void;
+  loading: boolean;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalRows: number;
+  refetch: () => void;
 }
 
 export function InvestmentTable({
   investments,
-  onDelete,
+  loading,
+  page,
+  setPage,
+  pageSize,
+  setPageSize,
+  totalRows,
+  refetch,
 }: InvestmentTableProps) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-3 px-6">Asset Name & Ticker</th>
-              <th className="py-3 px-6">Region</th>
-              <th className="py-3 px-6">Type</th>
-              <th className="py-3 px-6 text-right">Invested</th>
-              <th className="py-3 px-6 text-right">Current Value</th>
-              <th className="py-3 px-6 text-right">Overall Return</th>
-              <th className="py-3 px-6 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-            {investments.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400">
-                  No investments found matching your search.
-                </td>
-              </tr>
+  const columns: ColumnDef<InvestmentItem>[] = [
+    {
+      header: "Asset",
+      cell: (item) => (
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+            <PieChart className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="font-semibold text-slate-900">{item.assetName}</div>
+            <div className="text-xs text-slate-500">{item.ticker}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Asset Class",
+      accessorKey: "assetClass",
+    },
+    {
+      header: "Holdings",
+      cell: (item) => (
+        <span className="text-slate-700 font-medium">
+          {item.units.toLocaleString()} units
+        </span>
+      ),
+    },
+    {
+      header: "Current Value",
+      cell: (item) => (
+        <span className="font-semibold text-slate-900">
+          {item.currency === "USD" ? "$" : "₹"}
+          {item.currentValue.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      header: "Performance",
+      cell: (item) => {
+        const isPositive = item.performance >= 0;
+        return (
+          <div
+            className={`flex items-center gap-1 font-semibold ${isPositive ? "text-emerald-600" : "text-rose-600"}`}
+          >
+            {isPositive ? (
+              <TrendingUp className="w-4 h-4" />
             ) : (
-              investments.map((item) => {
-                const profit = item.currentValue - item.investedAmount;
-                const roi =
-                  item.investedAmount > 0
-                    ? (profit / item.investedAmount) * 100
-                    : 0;
-                const isPositive = profit >= 0;
-
-                return (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
-                    <td className="py-4 px-6 font-medium text-slate-900 flex items-center gap-3">
-                      <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                        <PieChart className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-slate-400 font-mono">
-                          {item.ticker}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
-                          item.region === "India"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
-                        }`}
-                      >
-                        {item.region} ({item.currency})
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-slate-600 font-medium">
-                      {item.type}
-                    </td>
-                    <td className="py-4 px-6 text-right text-slate-600 font-medium">
-                      {item.currency === "USD" ? "$" : "₹"}
-                      {item.investedAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td className="py-4 px-6 text-right font-bold text-slate-900">
-                      {item.currency === "USD" ? "$" : "₹"}
-                      {item.currentValue.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td
-                      className={`py-4 px-6 text-right font-semibold ${isPositive ? "text-emerald-600" : "text-rose-600"}`}
-                    >
-                      {isPositive ? "+" : ""}
-                      {item.currency === "USD" ? "$" : "₹"}
-                      {Math.abs(profit).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                      <span className="block text-xs font-normal">
-                        ({isPositive ? "+" : ""}
-                        {roi.toFixed(2)}%)
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-center">
-                      <button
-                        onClick={() => onDelete(item.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete Investment"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
+              <TrendingDown className="w-4 h-4" />
             )}
-          </tbody>
-        </table>
-      </div>
+            {isPositive ? "+" : ""}
+            {item.performance}%
+          </div>
+        );
+      },
+    },
+    {
+      header: "Actions",
+      className: "text-right",
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => console.log("Edit investment:", item.id)}
+            className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+            title="Edit Record"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={async () => {
+              if (confirm("Remove this asset from your portfolio?")) {
+                try {
+                  await fetch(`/api/investments?id=${item.id}`, {
+                    method: "DELETE",
+                  });
+                  refetch();
+                } catch (error) {
+                  console.error("Failed to delete investment record:", error);
+                }
+              }
+            }}
+            className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+            title="Delete Record"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-0">
+      <DataTable
+        columns={columns}
+        data={investments}
+        loading={loading}
+        keyExtractor={(item) => item.id}
+        emptyMessage="No investments found in your portfolio. Click 'Add Investment' to get started."
+      />
+      <TablePagination
+        page={page}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalRows={totalRows}
+        loading={loading}
+      />
     </div>
   );
 }

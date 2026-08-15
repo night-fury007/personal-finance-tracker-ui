@@ -1,88 +1,122 @@
 "use client";
 
-import { IncomeItem } from "@/lib/mockdata";
-import { Trash2, Wallet } from "lucide-react";
+import { ColumnDef, DataTable } from "@/components/common/DataTable";
+import { TablePagination } from "@/components/common/TablePagination";
+import { ArrowDownToLine, Edit2, Trash2 } from "lucide-react";
+
+export interface IncomeItem {
+  id: string;
+  source: string;
+  category: string;
+  amount: number;
+  currency: "USD" | "INR";
+  date: string;
+}
 
 interface IncomeTableProps {
   incomes: IncomeItem[];
-  onDelete: (id: string) => void;
+  loading: boolean;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  totalRows: number;
+  refetch: () => void;
 }
 
-export function IncomeTable({ incomes, onDelete }: IncomeTableProps) {
+export function IncomeTable({
+  incomes,
+  loading,
+  page,
+  setPage,
+  pageSize,
+  setPageSize,
+  totalRows,
+  refetch,
+}: IncomeTableProps) {
+  const columns: ColumnDef<IncomeItem>[] = [
+    {
+      header: "Source / Payer",
+      cell: (item) => (
+        <div className="flex items-center gap-2">
+          <ArrowDownToLine className="w-4 h-4 text-emerald-500" />
+          <span className="font-semibold text-slate-900">{item.source}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Category",
+      cell: (item) => (
+        <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700">
+          {item.category}
+        </span>
+      ),
+    },
+    {
+      header: "Amount",
+      cell: (item) => (
+        <span className="font-medium text-emerald-600">
+          +{item.currency === "USD" ? "$" : "₹"}
+          {item.amount.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      header: "Date",
+      accessorKey: "date",
+    },
+    {
+      header: "Actions",
+      className: "text-right",
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => console.log("Edit income:", item.id)}
+            className="p-1.5 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+            title="Edit Record"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={async () => {
+              if (confirm("Delete this income record?")) {
+                try {
+                  await fetch(`/api/income?id=${item.id}`, {
+                    method: "DELETE",
+                  });
+                  refetch();
+                } catch (error) {
+                  console.error("Failed to delete income record:", error);
+                }
+              }
+            }}
+            className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+            title="Delete Record"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-3 px-6">Source / Payer</th>
-              <th className="py-3 px-6">Category</th>
-              <th className="py-3 px-6">Frequency</th>
-              <th className="py-3 px-6">Date</th>
-              <th className="py-3 px-6">Currency</th>
-              <th className="py-3 px-6 text-right">Amount</th>
-              <th className="py-3 px-6 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-            {incomes.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400">
-                  No income records found matching your search.
-                </td>
-              </tr>
-            ) : (
-              incomes.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-50/80 transition-colors"
-                >
-                  <td className="py-4 px-6 font-medium text-slate-900 flex items-center gap-3">
-                    <div className="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
-                      <Wallet className="w-4 h-4" />
-                    </div>
-                    {item.source}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
-                      {item.category}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-slate-600">{item.frequency}</td>
-                  <td className="py-4 px-6 text-slate-500">{item.date}</td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                        item.currency === "USD"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-blue-50 text-blue-700"
-                      }`}
-                    >
-                      {item.currency}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right font-semibold text-emerald-600">
-                    +{item.currency === "USD" ? "$" : "₹"}
-                    {item.amount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <button
-                      onClick={() => onDelete(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Delete Record"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-0">
+      <DataTable
+        columns={columns}
+        data={incomes}
+        loading={loading}
+        keyExtractor={(item) => item.id}
+        emptyMessage="No income streams recorded yet. Click 'Add Income' to start."
+      />
+      <TablePagination
+        page={page}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalRows={totalRows}
+        loading={loading}
+      />
     </div>
   );
 }
